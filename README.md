@@ -11,7 +11,7 @@
 
 ```sh
 go install github.com/aethiopicuschan/cmg@latest
-cmg .
+cmg
 ```
 
 ## Usage
