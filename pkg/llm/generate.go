@@ -12,23 +12,18 @@ import (
 
 // GenerateCommitMessage uses an LLM (via eino) to generate a commit message
 // based on the current git diff.
-func GenerateCommitMessage(
-	ctx context.Context,
-	llm model.ToolCallingChatModel,
-	opts git.DiffOptions,
-	details bool,
-) (string, error) {
+func GenerateCommitMessage(ctx context.Context, llm model.ToolCallingChatModel, opts git.DiffOptions) (string, error) {
 	if !git.IsGitAvailable() {
 		return "", ErrGitNotAvailable
 	}
 	if !git.IsGitRepository() {
 		return "", ErrNotGitRepository
 	}
-	if !git.HasDiff() {
+	if !git.HasDiff(opts) {
 		return "", ErrNoGitChanges
 	}
 
-	messages := buildCommitPrompt(opts, details)
+	messages := buildCommitPrompt(opts, opts.OutputDetails)
 
 	// No tools are bound for this request.
 	resp, err := llm.Generate(ctx, messages)

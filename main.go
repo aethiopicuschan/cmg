@@ -1,7 +1,12 @@
 package main
 
-import "github.com/aethiopicuschan/cmg/cmd"
+import (
+	"github.com/aethiopicuschan/cmg/cmd"
+	"github.com/aethiopicuschan/cmg/pkg/logs"
+)
 
 func main() {
-	cmd.Execute()
+	if err := cmd.Execute(); err != nil {
+		logs.Fatal(err.Error())
+	}
 }

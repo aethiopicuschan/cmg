@@ -50,27 +50,18 @@ func IsGitRepository() (is bool) {
 	}
 }
 
-// HasDiff checks whether there are any uncommitted changes.
-//
-// It returns true if there is at least one diff, false otherwise.
-// Internally, it uses `git diff --quiet`, which is efficient and
-// does not generate diff output.
-func HasDiff() bool {
-	cmd := exec.Command("git", "diff", "--quiet")
-	err := cmd.Run()
+func HasDiff(opts DiffOptions) bool {
+	for _, base := range gitDiffBaseArgs(opts.IgnoreUnstaged) {
+		args := append(base, "--quiet")
+		cmd := exec.Command("git", args...)
+		err := cmd.Run()
 
-	// Exit status:
-	//   0 => no diff
-	//   1 => diff exists
-	//   other => error
-	if err == nil {
-		return false
+		if err == nil {
+			continue
+		}
+		if exitErr, ok := err.(*exec.ExitError); ok && exitErr.ExitCode() == 1 {
+			return true
+		}
 	}
-
-	if exitErr, ok := err.(*exec.ExitError); ok {
-		return exitErr.ExitCode() == 1
-	}
-
-	// Any other error (e.g. git not available)
 	return false
 }

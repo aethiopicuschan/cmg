@@ -17,6 +17,18 @@ cmg
 ## Usage
 
 ```sh
+❯ cmg -h
+Commit message generator based on git diff using an LLM
+
+Usage:
+  cmg [flags]
+
+Flags:
+  -d, --details           include detailed commit body (multi-line commit message)
+  -h, --help              help for cmg
+  -i, --ignore-unstaged   ignore unstaged changes in the git diff
+  -v, --version           version for cmg
+
 ❯ cmg
 {Generated commit message with one line}
 

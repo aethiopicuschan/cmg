@@ -25,7 +25,7 @@ func DiffFiles(opts DiffOptions) iter.Seq[DiffFile] {
 	return func(yield func(DiffFile) bool) {
 		totalBytes := 0
 
-		for f := range diffNumstatSeq() {
+		for f := range diffNumstatSeq(opts) {
 			df := DiffFile{
 				Path:    f.Path,
 				Added:   f.Added,
