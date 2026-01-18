@@ -3,6 +3,7 @@ package cmd
 import (
 	"fmt"
 	"os"
+	"runtime/debug"
 
 	"github.com/aethiopicuschan/cmg/cmd/config"
 	pkgConfig "github.com/aethiopicuschan/cmg/pkg/config"
@@ -69,6 +70,11 @@ func Execute() {
 }
 
 func init() {
+	bi, ok := debug.ReadBuildInfo()
+	if ok {
+		rootCmd.Version = bi.Main.Version
+	}
+
 	rootCmd.AddCommand(config.Cmd)
 	rootCmd.Flags().BoolVar(
 		&details,
