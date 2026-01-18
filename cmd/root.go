@@ -2,39 +2,41 @@ package cmd
 
 import (
 	"fmt"
-	"os"
 	"runtime/debug"
 
-	"github.com/aethiopicuschan/cmg/cmd/config"
 	pkgConfig "github.com/aethiopicuschan/cmg/pkg/config"
 	"github.com/aethiopicuschan/cmg/pkg/git"
 	"github.com/aethiopicuschan/cmg/pkg/llm"
-	"github.com/aethiopicuschan/cmg/pkg/logs"
 	"github.com/spf13/cobra"
 )
 
-var details bool
+var (
+	details        bool
+	ignoreUnstaged bool
+)
 
 var rootCmd = &cobra.Command{
-	Use:          "cmg",
-	Long:         `Commit message generator based on git diff using an LLM`,
-	SilenceUsage: true,
-	Run: func(cmd *cobra.Command, args []string) {
+	Use:           "cmg",
+	Long:          `Commit message generator based on git diff using an LLM`,
+	SilenceUsage:  true,
+	SilenceErrors: true,
+	RunE: func(cmd *cobra.Command, args []string) (err error) {
 		// Load configuration
 		cfg, err := pkgConfig.GetConfig()
 		if err != nil {
-			logs.Fatal(err.Error())
+			return
 		}
 
 		// Ensure chat model config exists
 		if cfg.LLM.Models.Chat == nil {
-			logs.Fatal("chat model configuration is required")
+			err = fmt.Errorf("chat model configuration is required")
+			return
 		}
 
 		// Create LLM (ToolCallingChatModel)
 		chatModel, err := llm.NewChatModel(cfg.LLM)
 		if err != nil {
-			logs.Fatal(err.Error())
+			return
 		}
 
 		// Build diff options (LLM-safe defaults)
@@ -42,6 +44,7 @@ var rootCmd = &cobra.Command{
 			MaxTotalBytes:   120_000,
 			MaxPerFileBytes: 8_000,
 			IncludeDiffBody: true,
+			IgnoreUnstaged:  ignoreUnstaged,
 		}
 
 		ctx := cmd.Context()
@@ -51,22 +54,19 @@ var rootCmd = &cobra.Command{
 			ctx,
 			chatModel,
 			diffOpts,
-			details,
 		)
 		if err != nil {
-			logs.Fatal(err.Error())
+			return
 		}
 
 		// Output result
 		fmt.Fprintln(cmd.OutOrStdout(), message)
+		return
 	},
 }
 
-func Execute() {
-	if err := rootCmd.Execute(); err != nil {
-		fmt.Println(err)
-		os.Exit(1)
-	}
+func Execute() (err error) {
+	return rootCmd.Execute()
 }
 
 func init() {
@@ -74,12 +74,18 @@ func init() {
 	if ok {
 		rootCmd.Version = bi.Main.Version
 	}
-
-	rootCmd.AddCommand(config.Cmd)
-	rootCmd.Flags().BoolVar(
+	rootCmd.Flags().BoolVarP(
 		&details,
 		"details",
+		"d",
 		false,
 		"include detailed commit body (multi-line commit message)",
+	)
+	rootCmd.Flags().BoolVarP(
+		&ignoreUnstaged,
+		"ignore-unstaged",
+		"i",
+		false,
+		"ignore unstaged changes in the git diff",
 	)
 }

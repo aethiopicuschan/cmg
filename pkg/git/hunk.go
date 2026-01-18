@@ -22,7 +22,7 @@ func DiffHunks(opts DiffOptions) iter.Seq[DiffHunk] {
 	return func(yield func(DiffHunk) bool) {
 		totalBytes := 0
 
-		for f := range diffNumstatSeq() {
+		for f := range diffNumstatSeq(opts) {
 			for h := range diffHunksFromFile(f.Path, opts.MaxPerFileBytes) {
 				size := len(h.Header) + len(h.Body)
 				totalBytes += size
